@@ -2,4 +2,4 @@ goodsend_env/
 __pycache__/
 .vscode/
 .env
-goodsend/key.json
+/goodsend/key.json
