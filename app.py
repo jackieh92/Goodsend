@@ -1,7 +1,7 @@
 import os
-from firebase_admin import credentials, firestore, initialize_app, db
+from firebase_admin import credentials, firestore, initialize_app, db, auth
 from flask import Flask, render_template, request, redirect, url_for
-from goodsend.forms import UserInfoForm
+from goodsend.forms import UserInfoForm, LoginForm
 from flask_login import login_required,login_user,current_user,logout_user
 from goodsend import app
 from goodsend.models import User, check_password_hash
@@ -20,10 +20,14 @@ def login():
     if request.method == 'POST' and form.validate():
         email = form.email.data
         password = form.password.data
-        logged_user = User.query.filter(User.email == email).first()
+        # uid = db.collection('beneficiary').getToken()
+        logged_user = ben_ref.document().id
+        # docs = ben_ref.stream()
+        # for doc in docs:
         if logged_user and check_password_hash(logged_user.password,password):
-            login_user(logged_user)
-            return redirect(url_for('portal'))
+            #login_user(logged_user)
+            print("logged in")
+            return redirect(url_for('login'))
         else:
             return redirect(url_for('login'))
     return render_template('login.html',form=form)
