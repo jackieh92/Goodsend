@@ -5,17 +5,31 @@ from goodsend.forms import UserInfoForm
 from flask_login import login_required,login_user,current_user,logout_user
 from goodsend import app
 from goodsend.models import User, check_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 
-# Initialize Firestore DB
-# cred = credentials.Certificate('./goodsend/key.json')
-# default_app = initialize_app(cred)
+
 db = firestore.client()
 ben_ref = db.collection('beneficiary')
-# field_create = {
-#     "name": "test",
-#     "email": "testmail@test.com",
-# }
-# ben_ref.document().create(field_create)
+def set_password(password):
+    pw_hash = generate_password_hash(password)
+    return pw_hash
+
+@app.route('/', methods=['GET','POST'])
+def login():
+    form = LoginForm()
+    if request.method == 'POST' and form.validate():
+        email = form.email.data
+        password = form.password.data
+        logged_user = User.query.filter(User.email == email).first()
+        if logged_user and check_password_hash(logged_user.password,password):
+            login_user(logged_user)
+            return redirect(url_for('portal'))
+        else:
+            return redirect(url_for('login'))
+    return render_template('login.html',form=form)
+
+
+
 @app.route('/register', methods=['GET','POST'])
 def create():
     """
@@ -29,31 +43,15 @@ def create():
         last_name = form.last_name.data
         email = form.email.data
         password = form.password.data
-        # user = User(first_name,last_name,email,password)
         field_create = {
             "first_name": first_name,
             "last_name" : last_name,
             "email" : email,
-            "password" : password
+            "password" : set_password(password)
         }
         ben_ref.document().create(field_create)
-        # ben_ref.document().create(last_name)
-        # ben_ref.document().create(email)
-        # ben_ref.document().create(password)
-
-    # try:
-    #     id = request.form['id']
-    #     # email = request.json['email']
-    #     # first_name = request.json['first_name']
-    #     # last_name = request.json['last_name']
-    #     ben_ref.document(id).set(request.form)
-        # ben_ref.document(email).set(request.json)
-        # ben_ref.document(first_name).set(request.json)
-        # ben_ref.document(last_name).set(request.json)
-        # return jsonify({"success": True}), 200
     return render_template("register.html", form = form)
-    # except Exception as e:
-    #     return f"An Error Occured: {e}"
+
 # @app.route('/list', methods=['GET'])
 # def read():
 #     """
